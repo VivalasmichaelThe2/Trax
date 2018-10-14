@@ -16,7 +16,7 @@ unsigned long delta;
 
 void setup(void)
 {
-  Serial.begin(115200);
+  Serial.begin(9600);
   pinMode(pin_Out_S0, OUTPUT);
   pinMode(pin_Out_S1, OUTPUT);
   pinMode(pin_Out_S2, OUTPUT);
@@ -53,8 +53,10 @@ void loop() {
     Serial.println(millis() - delta);
     delta = millis();
   }
-    else
+    else{
       current_antenna++;
+      }
+      
   boolean success;
   uint8_t uid[] = { 0, 0, 0, 0, 0, 0, 0 }; // Buffer to store the returned UID
   uint8_t uidLength;
