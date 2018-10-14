@@ -16,7 +16,7 @@ unsigned long delta;
 
 void setup(void)
 {
-  Serial.begin(9600);
+  Serial.begin(115200);
   pinMode(pin_Out_S0, OUTPUT);
   pinMode(pin_Out_S1, OUTPUT);
   pinMode(pin_Out_S2, OUTPUT);
