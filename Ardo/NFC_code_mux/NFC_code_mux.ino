@@ -2,21 +2,32 @@
 #include <PN532_I2C.h>
 #include <PN532.h>
 #include <NfcAdapter.h>
+#include <FastLED.h>
+
+#define LED_PIN     6
+#define NUM_LEDS    16
+#define BRIGHTNESS  128
+#define LED_TYPE    WS2811
+#define COLOR_ORDER RGB
+CRGB leds[NUM_LEDS];
+
 
 PN532_I2C pn532_i2c0(Wire);
 PN532 nfc0(pn532_i2c0);
 
 int current_antenna = 0;
-int pin_Out_S0 = 3;
-int pin_Out_S1 = 5;
-int pin_Out_S2 = 6;
-int pin_Out_S3 = 9;
+int pin_Out_S0 = 2;
+int pin_Out_S1 = 3;
+int pin_Out_S2 = 4;
+int pin_Out_S3 = 5;
 int antenaNum = 8;
 unsigned long delta;
 
 void setup(void)
 {
   Serial.begin(115200);
+  FastLED.addLeds<LED_TYPE, LED_PIN, COLOR_ORDER>(leds, NUM_LEDS).setCorrection( TypicalLEDStrip );
+  FastLED.setBrightness(  BRIGHTNESS );
   pinMode(pin_Out_S0, OUTPUT);
   pinMode(pin_Out_S1, OUTPUT);
   pinMode(pin_Out_S2, OUTPUT);
@@ -28,7 +39,7 @@ void setup(void)
     switchMux(i);
     delay(100);
     nfc0.begin();
-
+    nfc0.SAMConfig();
     versiondata = nfc0.getFirmwareVersion();
     if (! versiondata)
     {
@@ -39,7 +50,7 @@ void setup(void)
       Serial.print("Found chip PN5"); Serial.println((versiondata >> 24) & 0xFF, HEX);
       Serial.print("Firmware ver. "); Serial.print((versiondata >> 16) & 0xFF, DEC);
       Serial.print('.'); Serial.println((versiondata >> 8) & 0xFF, DEC);
-      nfc0.setPassiveActivationRetries(0x12);
+      nfc0.setPassiveActivationRetries(0x0);
       nfc0.SAMConfig();
       delay(100);
     }
@@ -47,16 +58,16 @@ void setup(void)
   }
 }
 void loop() {
+  delay(1000);
+  nfc0.SAMConfig();
   if (current_antenna == antenaNum){
     current_antenna = 0;
     Serial.print("Time to round = ");
     Serial.println(millis() - delta);
     delta = millis();
   }
-    else{
+    else
       current_antenna++;
-      }
-      
   boolean success;
   uint8_t uid[] = { 0, 0, 0, 0, 0, 0, 0 }; // Buffer to store the returned UID
   uint8_t uidLength;
@@ -67,6 +78,9 @@ void loop() {
     //delay(100);
     success = nfc0.readPassiveTargetID(PN532_MIFARE_ISO14443A, &uid[0], &uidLength);
     if (success) {
+      leds[current_antenna*2] = CRGB::Green;
+      leds[current_antenna*2-1] = CRGB::Green;
+      FastLED.show();
       Serial.print("---------Scan a NFC tag #");
       Serial.print(current_antenna);
       Serial.println(" -------");
