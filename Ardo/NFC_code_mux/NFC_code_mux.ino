@@ -20,7 +20,7 @@ int pin_Out_S0 = 2;
 int pin_Out_S1 = 3;
 int pin_Out_S2 = 4;
 int pin_Out_S3 = 5;
-int antenaNum = 8;
+int antenaNum = 7;
 unsigned long delta;
 
 void setup(void)
@@ -58,7 +58,7 @@ void setup(void)
   }
 }
 void loop() {
-  delay(1000);
+  delay(300);
   nfc0.SAMConfig();
   if (current_antenna == antenaNum){
     current_antenna = 0;
