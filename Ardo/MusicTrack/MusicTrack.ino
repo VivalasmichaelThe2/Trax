@@ -1,3 +1,5 @@
+
+#include <SoftwareSerial.h>// import the serial library
 #include <Wire.h>
 #include <PN532_I2C.h>
 #include <PN532.h>
@@ -5,6 +7,11 @@
 #include <Thread.h>
 #include <ThreadController.h>
 #include <FastLED.h>
+
+SoftwareSerial btSerial(1, 0); // RX, TX
+int ledpin = 13; // led on D13 will show blink on / off
+int BluetoothData; // the data given from Computer
+String data; // the data given from Computer
 
 PN532_I2C pn532_i2c(Wire);
 PN532 nfc(pn532_i2c);
@@ -33,9 +40,7 @@ PN532 nfc0(pn532_i2c0);
 
 enum TraxRole { Empty, Note_C, Note_D, Note_E,
                 Note_F, Note_G, Note_A,
-                Note_B, Instrument_1
-              };
-
+                Note_B, Instrument_1};
 
 uint8_t UIDList[9][8] = {{ 0, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0 }};
 uint8_t uidLength[9];
@@ -57,7 +62,8 @@ unsigned long delta;
 void setup(void)
 {
   /// Init Serial
-  Serial.begin(9600);
+  //Serial.begin(9600);
+  btSerial.begin(9600);
   //Serial.begin(115200);
   /// Init Mux
   pinMode(pin_Out_S0, OUTPUT);
@@ -76,12 +82,16 @@ void setup(void)
   InitNRF();
 }
 
+void PrintToSerial(const char * text ){
+   btSerial.println(text);
+  }
+
 
 void InitNRF() {
   uint32_t versiondata;
   for (int i = 0; i < antenaNum; i++) {
-    Serial.print("setup start of antena ");
-    Serial.println(i);
+    PrintToSerial("setup start of antena ");
+    PrintToSerial(i);
     switchMux(i);
     delay(100);
     nfc0.begin();
@@ -89,18 +99,21 @@ void InitNRF() {
     versiondata = nfc0.getFirmwareVersion();
     if (! versiondata)
     {
-      Serial.println("Didn't find PN53x board");
+      PrintToSerial("Didn't find PN53x board");
     }
     else
     {
-      Serial.print("Found chip PN5"); Serial.println((versiondata >> 24) & 0xFF, HEX);
-      Serial.print("Firmware ver. "); Serial.print((versiondata >> 16) & 0xFF, DEC);
-      Serial.print('.'); Serial.println((versiondata >> 8) & 0xFF, DEC);
+      PrintToSerial("Found chip PN5");
+      //PrintToSerial((versiondata >> 24) & 0xFF, HEX);
+     PrintToSerial("Firmware ver. ");
+     //PrintToSerial((versiondata >> 16) & 0xFF, DEC);
+     PrintToSerial("."); 
+     //PrintToSerial((versiondata >> 8) & 0xFF, DEC);
       nfc0.setPassiveActivationRetries(0x12);
       nfc0.SAMConfig();
       delay(100);
     }
-    Serial.println("---------------------------------------------");
+   PrintToSerial("---------------------------------------------");
   }
 
 }
@@ -108,11 +121,11 @@ void InitNRF() {
 
 void loop() {
 
-  Serial.println("Loop");
+  PrintToSerial("Loop");
   if (current_antenna == antenaNum) {
     current_antenna = 0;
-    Serial.print("Time to round = ");
-    Serial.println(millis() - delta);
+    PrintToSerial("Time to round = ");
+    PrintToSerial(millis() - delta);
     delta = millis();
   }
   else {
@@ -123,23 +136,26 @@ void loop() {
   uint8_t uid[] = { 0, 0, 0, 0, 0, 0, 0 }; // Buffer to store the returned UID
   uint8_t uidLength;
   //for (int i = 0 ; i < antenaNum; i++) {
-  Serial.print("i = ");
-  Serial.println(current_antenna);
+  PrintToSerial("i = ");
+  PrintToSerial(current_antenna);
   switchMux(current_antenna);
   //delay(100);
   success = nfc0.readPassiveTargetID(PN532_MIFARE_ISO14443A, &uid[0], &uidLength);
   if (success) {
-    Serial.print("---------Scan a NFC tag #");
-    Serial.print(current_antenna);
-    Serial.println(" -------");
-    Serial.println("Found a card!");
-    Serial.print("UID Length: "); Serial.print(uidLength, DEC); Serial.println(" bytes");
-    Serial.print("UID Value: ");
+    PrintToSerial("---------Scan a NFC tag #");
+    PrintToSerial(current_antenna);
+    PrintToSerial(" -------");
+    PrintToSerial("Found a card!");
+    PrintToSerial("UID Length: ");
+    //PrintToSerial(uidLength, DEC); 
+    PrintToSerial(" bytes");
+    PrintToSerial("UID Value: ");
     for (uint8_t c = 0; c < uidLength; c++)
     {
-      Serial.print(" 0x"); Serial.print(uid[c], HEX);
+     PrintToSerial(" 0x");
+     //PrintToSerial(uid[c], HEX);
     }
-    Serial.println("");
+    PrintToSerial("");
   }
  // UpdateButtons();
   //SetLeds() ;
