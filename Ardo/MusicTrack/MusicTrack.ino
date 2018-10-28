@@ -18,7 +18,7 @@ PN532 nfc(pn532_i2c);
 
 ///////////////// LEDS  //////////////////
 #define LED_PIN     5
-#define NUM_LEDS    50
+#define NUM_LEDS    20
 #define BRIGHTNESS  64
 #define LED_TYPE    WS2811
 #define COLOR_ORDER RGB
@@ -30,17 +30,18 @@ int buttonPins[8] = {6, 7, 8, 9, 10, 11, 12, 13};
 
 //InstrumentTrack track(buttonPins);
 
-int pin_Out_S0 = 3;
-int pin_Out_S1 = 5;
-int pin_Out_S2 = 6;
-int pin_Out_S3 = 9;
+int pin_Out_S0 = 2;
+int pin_Out_S1 = 3;
+int pin_Out_S2 = 4;
+int pin_Out_S3 = 5;
 
 PN532_I2C pn532_i2c0(Wire);
 PN532 nfc0(pn532_i2c0);
 
 enum TraxRole { Empty, Note_C, Note_D, Note_E,
                 Note_F, Note_G, Note_A,
-                Note_B, Instrument_1};
+                Note_B, Instrument_1
+              };
 
 uint8_t UIDList[9][8] = {{ 0, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0 }};
 uint8_t uidLength[9];
@@ -76,22 +77,21 @@ void setup(void)
   FastLED.setBrightness( BRIGHTNESS );
   /// Init Buttons
   for (int i = 0; i < ButtonNumer; i++) {
-    //pinMode(buttonPins[i], INPUT);
+    pinMode(buttonPins[i], INPUT);
   }
+
   ///Init NRF
   InitNRF();
 }
 
-void PrintToSerial(const char * text ){
-   btSerial.println(text);
-  }
 
 
 void InitNRF() {
+  btSerial.println("3");
   uint32_t versiondata;
   for (int i = 0; i < antenaNum; i++) {
-    PrintToSerial("setup start of antena ");
-    PrintToSerial(i);
+    btSerial.print("setup start of antena ");
+    btSerial.println(i);
     switchMux(i);
     delay(100);
     nfc0.begin();
@@ -99,84 +99,88 @@ void InitNRF() {
     versiondata = nfc0.getFirmwareVersion();
     if (! versiondata)
     {
-      PrintToSerial("Didn't find PN53x board");
+      btSerial.println("Didn't find PN53x board");
     }
     else
     {
-      PrintToSerial("Found chip PN5");
-      //PrintToSerial((versiondata >> 24) & 0xFF, HEX);
-     PrintToSerial("Firmware ver. ");
-     //PrintToSerial((versiondata >> 16) & 0xFF, DEC);
-     PrintToSerial("."); 
-     //PrintToSerial((versiondata >> 8) & 0xFF, DEC);
+      btSerial.print("Found chip PN5");
+
+      btSerial.print((versiondata >> 24) & 0xFF, HEX);
+      btSerial.print("Firmware ver. ");
+      btSerial.print((versiondata >> 16) & 0xFF, DEC);
+      btSerial.print(".");
+      btSerial.println((versiondata >> 8) & 0xFF, DEC);
       nfc0.setPassiveActivationRetries(0x12);
       nfc0.SAMConfig();
       delay(100);
     }
-   PrintToSerial("---------------------------------------------");
+    btSerial.println("---------------------------------------------");
   }
-
+  //btSerial.println("1");
 }
 
-
+boolean success;
+uint8_t uid[] = { 0, 0, 0, 0, 0, 0, 0 }; // Buffer to store the returned UID
+uint8_t uidLength;
 void loop() {
 
-  PrintToSerial("Loop");
   if (current_antenna == antenaNum) {
+    btSerial.println("Loop");
     current_antenna = 0;
-    PrintToSerial("Time to round = ");
-    PrintToSerial(millis() - delta);
+    btSerial.print("Time to round = ");
+    btSerial.println(millis() - delta);
     delta = millis();
   }
   else {
     current_antenna++;
   }
 
-  boolean success;
-  uint8_t uid[] = { 0, 0, 0, 0, 0, 0, 0 }; // Buffer to store the returned UID
-  uint8_t uidLength;
-  //for (int i = 0 ; i < antenaNum; i++) {
-  PrintToSerial("i = ");
-  PrintToSerial(current_antenna);
   switchMux(current_antenna);
-  //delay(100);
+  btSerial.print("i = ");
+  btSerial.println(i);
+
   success = nfc0.readPassiveTargetID(PN532_MIFARE_ISO14443A, &uid[0], &uidLength);
   if (success) {
-    PrintToSerial("---------Scan a NFC tag #");
-    PrintToSerial(current_antenna);
-    PrintToSerial(" -------");
-    PrintToSerial("Found a card!");
-    PrintToSerial("UID Length: ");
-    //PrintToSerial(uidLength, DEC); 
-    PrintToSerial(" bytes");
-    PrintToSerial("UID Value: ");
-    for (uint8_t c = 0; c < uidLength; c++)
-    {
-     PrintToSerial(" 0x");
-     //PrintToSerial(uid[c], HEX);
-    }
-    PrintToSerial("");
+    PrintNfcTag( uid, uidLength, i);
+    SetRole(uid, uidLength, i);
   }
- // UpdateButtons();
-  //SetLeds() ;
-// SendTrackStatus();
+
+  UpdateButtons();
+  SetLeds() ;
+  btSerial.println(SendTrackStatus());
 
 
- /* boolean success;
-  uint8_t uid[] = { 0, 0, 0, 0, 0, 0, 0 }; // Buffer to store the returned UID
-  uint8_t uidLength;
-  for (int i = 0 ; i < antenaNum; i++) {
-    Serial.print("i = ");
-    Serial.println(i);
-    switchMux(i);
-    delay(100);
-    success = nfc_arr[i]->readPassiveTargetID(PN532_MIFARE_ISO14443A, &uid[0], &uidLength);
+
+
+
+  /* boolean success;
+    uint8_t uid[] = { 0, 0, 0, 0, 0, 0, 0 }; // Buffer to store the returned UID
+    uint8_t uidLength;
+    // for (int i = 0 ; i < antenaNum; i++) {
+    btSerial.print("i = ");
+    btSerial.println(current_antenna);
+    switchMux(current_antenna);
+    //delay(1000);
+    delay(200);
+    success = nfc0.readPassiveTargetID(PN532_MIFARE_ISO14443A, &uid[0], &uidLength);
     if (success) {
-      PrintNfcTag( uid, uidLength, i);
-      SetRole(uid, uidLength, i);
-    }
-  }*/
-  
+     btSerial.print("---------Scan a NFC tag #");
+     btSerial.print(current_antenna);
+     btSerial.println(" -------");
+     btSerial.println("Found a card!");
+     btSerial.print("UID Length: ");
+     btSerial.print(uidLength, DEC);
+     btSerial.println(" bytes");
+     btSerial.print("UID Value: ");
+     for (uint8_t c = 0; c < uidLength; c++)
+     {
+       btSerial.print(" 0x");
+       btSerial.print(uid[c], HEX);
+     }
+     btSerial.println("");
+    }*/
+
+
 }
 
 /// Need to build this with BT technology
@@ -229,6 +233,7 @@ void SetLeds() {
 }
 
 void UpdateButtons() {
+  
   for (int i = 0; i < ButtonNumer; i++) {
     if (digitalRead(buttonPins[i]) == HIGH) {
       if (buttonState[i] == false) {
@@ -341,18 +346,21 @@ String GetUIDString(TraxRole role) {
 }
 
 
-void PrintNfcTag(uint8_t uid[], uint8_t uidLength, int i) {
-   Serial.print("---------Scan a NFC tag #");
-    Serial.print(current_antenna);
-    Serial.println(" -------");
-    Serial.println("Found a card!");
-    Serial.print("UID Length: "); Serial.print(uidLength, DEC); Serial.println(" bytes");
-    Serial.print("UID Value: ");
-    for (uint8_t c = 0; c < uidLength; c++)
-    {
-      Serial.print(" 0x"); Serial.print(uid[c], HEX);
-    }
-    Serial.println("");
+void PrintNfcTag(uint8_t uid[], uint8_t uidLength) {
+  btSerial.print("---------Scan a NFC tag #");
+  btSerial.print(current_antenna);
+  btSerial.println(" -------");
+  btSerial.println("Found a card!");
+  btSerial.print("UID Length: ");
+  btSerial.print(uidLength, DEC);
+  btSerial.println(" bytes");
+  btSerial.print("UID Value: ");
+  for (uint8_t c = 0; c < uidLength; c++)
+  {
+    btSerial.print(" 0x");
+    btSerial.print(uid[c], HEX);
+  }
+  btSerial.println("");
 }
 
 
