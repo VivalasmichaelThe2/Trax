@@ -29,10 +29,10 @@
 
 #include <Wire.h>
 
-int pin_Out_S0 = 3;
-int pin_Out_S1 = 5;
-int pin_Out_S2 = 6;
-int pin_Out_S3 = 9;
+int pin_Out_S0 = 2;
+int pin_Out_S1 = 3;
+int pin_Out_S2 = 4;
+int pin_Out_S3 = 5;
 int antenaNum = 8;
 
 void setup()

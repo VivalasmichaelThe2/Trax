@@ -33,7 +33,7 @@ void setup(void)
   pinMode(pin_Out_S2, OUTPUT);
   pinMode(pin_Out_S3, OUTPUT);
   uint32_t versiondata;
-  for (int i = 0; i < antenaNum; i++) {
+  for (int i = 1; i < antenaNum; i++) {
     Serial.print("setup start of antena ");
     Serial.println(i);
     switchMux(i);
