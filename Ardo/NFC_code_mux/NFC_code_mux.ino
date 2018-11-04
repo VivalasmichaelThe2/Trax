@@ -10,7 +10,7 @@
 #define LED_TYPE    WS2811
 #define COLOR_ORDER RGB
 CRGB leds[NUM_LEDS];
-
+ 
 
 PN532_I2C pn532_i2c0(Wire);
 PN532 nfc0(pn532_i2c0);
@@ -20,7 +20,7 @@ int pin_Out_S0 = 2;
 int pin_Out_S1 = 3;
 int pin_Out_S2 = 4;
 int pin_Out_S3 = 5;
-int antenaNum = 7;
+int antenaNum = 9;
 unsigned long delta;
 
 void setup(void)
@@ -58,7 +58,7 @@ void setup(void)
   }
 }
 void loop() {
-  delay(300);
+  delay(100);
   nfc0.SAMConfig();
   if (current_antenna == antenaNum){
     current_antenna = 0;
