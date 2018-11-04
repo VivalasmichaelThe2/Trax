@@ -23,13 +23,13 @@
 */
 
 // constants won't change. They're used here to set pin numbers:
-const int buttonPin1 = 7;
-const int buttonPin2 = 8;
-const int buttonPin3 = 9;
-const int buttonPin4 = 10;
-const int buttonPin5 = 11;
-const int buttonPin6 = 12;
-const int buttonPin7 = 13;
+const int buttonPin1 = A0;
+const int buttonPin2 = A1;
+const int buttonPin3 = A2;
+const int buttonPin4 = A3;
+const int buttonPin5 = 12;
+const int buttonPin6 = 11;
+const int buttonPin7 = 10;
 
 const int ledPin =  13;
 
